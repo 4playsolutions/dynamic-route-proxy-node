@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RouteCard } from './RouteCard';
 import { RouteForm } from './RouteForm';
+import { ProxyManager } from './ProxyManager';
+import { MetricsPanel } from './MetricsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { Route } from '@/types/api';
@@ -18,7 +20,8 @@ import {
   RefreshCw,
   Activity,
   Globe,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,6 +31,7 @@ export function Dashboard() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+  const [activeTab, setActiveTab] = useState('routes');
   const { logout } = useAuth();
   const { toast } = useToast();
 
@@ -116,7 +120,7 @@ export function Dashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Proxy Reverso</h1>
-                <p className="text-sm text-gray-600">Gerenciamento de Rotas</p>
+                <p className="text-sm text-gray-600">Gerenciamento Avançado</p>
               </div>
             </div>
             
@@ -185,64 +189,92 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar rotas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Rota
-          </Button>
-        </div>
+        {/* Tabs Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="routes" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Rotas
+            </TabsTrigger>
+            <TabsTrigger value="proxies" className="flex items-center gap-2">
+              <Server className="h-4 w-4" />
+              Proxies
+            </TabsTrigger>
+            <TabsTrigger value="metrics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Métricas
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Routes Grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : filteredRoutes.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Server className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'Nenhuma rota encontrada' : 'Nenhuma rota configurada'}
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm 
-                  ? 'Tente ajustar os termos da busca'
-                  : 'Comece criando sua primeira rota para o proxy reverso'
-                }
-              </p>
-              {!searchTerm && (
-                <Button onClick={() => setShowForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Rota
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredRoutes.map((route) => (
-              <RouteCard
-                key={route.id}
-                route={route}
-                onDelete={handleDeleteRoute}
-                onEdit={(route) => {
-                  setEditingRoute(route);
-                  setShowForm(true);
-                }}
-              />
-            ))}
-          </div>
-        )}
+          <TabsContent value="routes" className="space-y-6">
+            {/* Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar rotas..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Nova Rota
+              </Button>
+            </div>
+
+            {/* Routes Grid */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : filteredRoutes.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Server className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {searchTerm ? 'Nenhuma rota encontrada' : 'Nenhuma rota configurada'}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm 
+                      ? 'Tente ajustar os termos da busca'
+                      : 'Comece criando sua primeira rota para o proxy reverso'
+                    }
+                  </p>
+                  {!searchTerm && (
+                    <Button onClick={() => setShowForm(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeira Rota
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredRoutes.map((route) => (
+                  <RouteCard
+                    key={route.id}
+                    route={route}
+                    onDelete={handleDeleteRoute}
+                    onEdit={(route) => {
+                      setEditingRoute(route);
+                      setShowForm(true);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="proxies">
+            <ProxyManager />
+          </TabsContent>
+
+          <TabsContent value="metrics">
+            <MetricsPanel />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
