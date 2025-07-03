@@ -1,7 +1,9 @@
 
 import { Route } from '@/types/api';
 
-const API_BASE_URL = 'http://localhost:3000' || https://lozaf2.u5prime.xyz; // Ajuste conforme necessário
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? process.meta.env.API_URL
+  : 'https://lozaf2.u5prime.xyz'; // Ajuste conforme necessário
 
 class ApiService {
   private token: string | null = null;
